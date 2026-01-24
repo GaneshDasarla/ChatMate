@@ -1,0 +1,112 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+import SearchUsers from "./SearchUsers";
+import { useChat } from "../context/ChatContext";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import "../styles/app.css";
+
+export default function Sidebar({ setSelectedUser }) {
+  const [recentChats, setRecentChats] = useState([]);
+  const { users, openChat, unreadCounts } = useChat();
+  const { onlineUsers } = useAuth();
+  const navigate = useNavigate();
+
+  const fetchRecentChats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get("http://localhost:5000/api/messages/recent", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setRecentChats(res.data);
+    } catch (error) {
+      setRecentChats([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentChats();
+  }, []);
+
+  const handleSelectUser = (user) => {
+    if (setSelectedUser) setSelectedUser(user);
+    openChat(user);
+    fetchRecentChats();
+  };
+
+  return (
+    <div className="sidebar">
+      <div className="sidebarHeader">
+        <h3>Chats</h3>
+        <button className="smallBtn" onClick={() => navigate("/profile")}>
+          Edit Profile
+        </button>
+      </div>
+
+      {/* ✅ Search */}
+      <SearchUsers onSelectUser={handleSelectUser} />
+
+      {/* ✅ Recent chats */}
+      <div style={{ padding: "10px" }}>
+        <h4>Recent Chats</h4>
+
+        {recentChats.length === 0 ? (
+          <p style={{ fontSize: "14px", color: "gray" }}>
+            No recent chats. Search username to start.
+          </p>
+        ) : (
+          recentChats.map((u) => (
+            <div key={u._id} className="userRow" onClick={() => handleSelectUser(u)}>
+              <div className="userInfo">
+                <img
+                  className="avatar"
+                  src={u.profilePic || "https://via.placeholder.com/50"}
+                  alt="pic"
+                />
+                <div>
+                  <p className="username">{u.fullName}</p>
+                  <p className="status">
+                    {onlineUsers.includes(u._id) ? "🟢 Online" : "⚪ Offline"}
+                  </p>
+                </div>
+              </div>
+
+              {unreadCounts?.[u._id] > 0 && (
+                <span className="badge">{unreadCounts[u._id]}</span>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ✅ Optional: All users list */}
+      <div style={{ padding: "10px" }}>
+        <h4>All Users</h4>
+
+        {users.map((u) => (
+          <div key={u._id} className="userRow" onClick={() => handleSelectUser(u)}>
+            <div className="userInfo">
+              <img
+                className="avatar"
+                src={u.profilePic || "https://via.placeholder.com/50"}
+                alt="pic"
+              />
+              <div>
+                <p className="username">{u.fullName}</p>
+                <p className="status">
+                  {onlineUsers.includes(u._id) ? "🟢 Online" : "⚪ Offline"}
+                </p>
+              </div>
+            </div>
+
+            {unreadCounts?.[u._id] > 0 && (
+              <span className="badge">{unreadCounts[u._id]}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
