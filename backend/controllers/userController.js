@@ -126,22 +126,31 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// ✅ SEARCH USERS BY USERNAME
+// ✅ SEARCH USERS BY USERNAME (DEPLOY-SAFE)
 exports.searchUsers = async (req, res) => {
   try {
-    const query = (req.query.query || "").trim().toLowerCase();
+    const query = (req.query.query || "").trim();
 
-    if (!query || query.length < 2) return res.json([]);
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
 
-    const users = await User.find({
-      _id: { $ne: req.user._id },
+    const filter = {
       username: { $regex: query, $options: "i" },
-    })
+    };
+
+    // ✅ exclude logged-in user ONLY if req.user exists
+    if (req.user && req.user._id) {
+      filter._id = { $ne: req.user._id };
+    }
+
+    const users = await User.find(filter)
       .select("_id fullName username profilePic")
       .limit(10);
 
     res.json(users);
   } catch (error) {
+    console.error("Search error:", error);
     res.status(500).json({ message: "Search users failed" });
   }
 };

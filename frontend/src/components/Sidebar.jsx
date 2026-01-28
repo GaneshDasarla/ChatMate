@@ -12,13 +12,22 @@ export default function Sidebar({ setSelectedUser }) {
   const { onlineUsers } = useAuth();
   const navigate = useNavigate();
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem("token");
+
+  // ✅ Fetch recent chats (DEPLOY SAFE)
   const fetchRecentChats = async () => {
     try {
-      const token = localStorage.getItem("token");
+      if (!token) return;
 
-      const res = await axios.get("http://localhost:5000/api/messages/recent", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `${BACKEND_URL}/api/messages/recent`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setRecentChats(res.data);
     } catch (error) {
@@ -45,10 +54,10 @@ export default function Sidebar({ setSelectedUser }) {
         </button>
       </div>
 
-      {/* ✅ Search */}
+      {/* ✅ SEARCH USERS */}
       <SearchUsers onSelectUser={handleSelectUser} />
 
-      {/* ✅ Recent chats */}
+      {/* ✅ RECENT CHATS */}
       <div style={{ padding: "10px" }}>
         <h4>Recent Chats</h4>
 
@@ -58,7 +67,11 @@ export default function Sidebar({ setSelectedUser }) {
           </p>
         ) : (
           recentChats.map((u) => (
-            <div key={u._id} className="userRow" onClick={() => handleSelectUser(u)}>
+            <div
+              key={u._id}
+              className="userRow"
+              onClick={() => handleSelectUser(u)}
+            >
               <div className="userInfo">
                 <img
                   className="avatar"
@@ -81,12 +94,16 @@ export default function Sidebar({ setSelectedUser }) {
         )}
       </div>
 
-      {/* ✅ Optional: All users list */}
+      {/* ✅ ALL USERS */}
       <div style={{ padding: "10px" }}>
         <h4>All Users</h4>
 
         {users.map((u) => (
-          <div key={u._id} className="userRow" onClick={() => handleSelectUser(u)}>
+          <div
+            key={u._id}
+            className="userRow"
+            onClick={() => handleSelectUser(u)}
+          >
             <div className="userInfo">
               <img
                 className="avatar"
