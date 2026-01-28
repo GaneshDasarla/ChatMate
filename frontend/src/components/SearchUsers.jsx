@@ -17,16 +17,18 @@ const SearchUsers = ({ onSelectUser }) => {
         const token = localStorage.getItem("token");
 
         const res = await axios.get(
-          `http://localhost:5000/api/users/search?query=${q}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/users/search`,
           {
+            params: { query: q },
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        setUsers(res.data);
-      } catch (err) {
+        setUsers(res.data || []);
+      } catch (error) {
+        console.error("User search failed:", error);
         setUsers([]);
       }
     }, 400);
